@@ -1,7 +1,10 @@
 import glob
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+
+from metadata import LABELS, FEATURES
 
 BASE_PATH = "dataset/"
 FILE_PATH = ""
@@ -24,27 +27,47 @@ def make_dataset():
     data = data.drop(['Timestamp'], axis=1)
     data = data[~data['Dst Port'].str.contains("Dst", na=False)]
     data_train, data_test = train_test_split(data, test_size=0.2)
-    data.to_csv(BASE_PATH+"CICIDS2018_all.csv", index=False)
+    data.to_csv(BASE_PATH+"CICIDS2018.csv", index=False)
     pd.DataFrame(data_train).to_csv(BASE_PATH+"CICIDS2018_train.csv", index=None)
     pd.DataFrame(data_test).to_csv(BASE_PATH+"CICIDS2018_test.csv", index=None)
 
-def make_small_dataset():
-    data = pd.read_csv(BASE_PATH+"CICIDS2018_small_before.csv")
-    data['Label'].replace(['Benign', 'Bot', 'Brute Force -Web', 
-                            'Brute Force -XSS', 'DDOS attack-HOIC', 
-                            'DDOS attack-LOIC-UDP', 'DDoS attacks-LOIC-HTTP',
-                            'DoS attacks-GoldenEye', 'DoS attacks-Hulk', 
-                            'DoS attacks-SlowHTTPTest','DoS attacks-Slowloris',
-                            'FTP-BruteForce', 'Infilteration', 
-                            'SQL Injection', 'SSH-Bruteforce'],
+def numeric_labels():
+    data = pd.read_csv(BASE_PATH+"CICIDS2018_all.csv")
+    data['Label'].replace(LABELS,
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], inplace=True)
-    data.to_csv(BASE_PATH+"CICIDS2018_small.csv", index=False)
-    # data_train, data_test = train_test_split(data, test_size=0.2)
-    # data_train.to_csv(BASE_PATH+"CICIDS2018_small_train.csv", index=False)
-    # data_test.to_csv(BASE_PATH+"CICIDS2018_small_test.csv", index=False)
+    data.to_csv(BASE_PATH+"CICIDS2018.csv", index=False)
+    data_train, data_test = train_test_split(data, test_size=0.2)
+    data_train.to_csv(BASE_PATH+"CICIDS2018_train.csv", index=False)
+    data_test.to_csv(BASE_PATH+"CICIDS2018_test.csv", index=False)
+
+def make_mal_only_dataset():
+    data = pd.read_csv(BASE_PATH+"CICIDS2018.csv")
+    data = data[data['Label'] != 0]
+    data_train, data_test = train_test_split(data, test_size=0.2)
+    data_train.to_csv(BASE_PATH+"CICIDS2018_mal_train.csv", index=False)
+    data_test.to_csv(BASE_PATH+"CICIDS2018_mal_test.csv", index=False)
+
+def norm(data, stats):
+    #return ((data - stats['mean']) / (stats['std']+0.00001))
+    return (data-stats['min']) / (stats['max']-stats['min']+0.00001)
+
+def load_dataset(filepath):
+    # df_all = pd.read_csv(BASE_PATH+"CICIDS2018.csv").replace([np.inf, -np.inf], np.nan).dropna().astype('float32')
+    # stats = df_all.describe().drop(['Label'], axis=1).transpose()
+    # stats.to_csv(BASE_PATH+"stats.csv", index=False)
+    stats = pd.read_csv(BASE_PATH+"stats.csv")
+    stats.index = FEATURES
+
+    df = pd.read_csv(filepath).replace([np.inf, -np.inf], np.nan).dropna().astype('float32')
+    labels = df.pop('Label')
+    data = norm(df, stats)
+
+    return data, labels
 
 
 if __name__ == "__main__":
     #drop_columns()
     #make_dataset()
-    make_small_dataset()
+    #numeric_labels()
+    #make_mal_only_dataset()
+    pass

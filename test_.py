@@ -1,0 +1,1 @@
+print([0.1**(10-i) for i in range(10)])
