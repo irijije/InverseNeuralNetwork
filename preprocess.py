@@ -47,6 +47,21 @@ def make_mal_only_dataset():
     data_train.to_csv(BASE_PATH+"CICIDS2018_mal_train.csv", index=False)
     data_test.to_csv(BASE_PATH+"CICIDS2018_mal_test.csv", index=False)
 
+def make_small_dataset():
+    data = pd.read_csv(BASE_PATH+"CICIDS2018.csv")
+    _, data_small = train_test_split(data, test_size=0.1)
+    data_small.to_csv(BASE_PATH+"CICIDS2018_middle.csv", index=False)
+    data_train, data_test = train_test_split(data_small, test_size=0.2)
+    data_train.to_csv(BASE_PATH+"CICIDS2018_middle_train.csv", index=False)
+    data_test.to_csv(BASE_PATH+"CICIDS2018_middle_test.csv", index=False)
+
+def make_small_mal_dataset():
+    data = pd.read_csv(BASE_PATH+"CICIDS2018_middle.csv")
+    data = data[data['Label'] != 0]
+    data_train, data_test = train_test_split(data, test_size=0.2)
+    data_train.to_csv(BASE_PATH+"CICIDS2018_middle_mal_train.csv", index=False)
+    data_test.to_csv(BASE_PATH+"CICIDS2018_middle_mal_test.csv", index=False)
+
 def norm(data, stats):
     #return ((data - stats['mean']) / (stats['std']+0.00001))
     return (data-stats['min']) / (stats['max']-stats['min']+0.00001)
@@ -69,5 +84,5 @@ if __name__ == "__main__":
     #drop_columns()
     #make_dataset()
     #numeric_labels()
-    #make_mal_only_dataset()
-    pass
+    make_small_dataset()
+    make_small_mal_dataset()
